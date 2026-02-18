@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "DTU Specialization Helper (MVP)",
-  "version": "0.1.0",
-  "description": "Highlights DTU courses that count toward an MSc specialization and shows ECTS progress.",
+  "name": "DTU Specialization Helper",
+  "version": "0.2.0",
   "permissions": ["storage"],
   "host_permissions": ["https://studieplan.dtu.dk/*"],
   "content_scripts": [
     {
       "matches": ["https://studieplan.dtu.dk/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "css": ["content/styles.css"],
+      "js": ["content/cse_specializations.js", "content/content.js"]
     }
   ]
 }

@@ -1,0 +1,135 @@
+/* content/styles.css */
+
+.dtuSpec-root {
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+.dtuSpec-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.05);
+  margin-left: 6px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.dtuSpec-badge[data-inplan="true"] {
+  border-color: rgba(0, 128, 0, 0.35);
+  background: rgba(0, 128, 0, 0.1);
+}
+
+.dtuSpec-widget {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  width: 390px;
+  max-height: 55vh;
+  overflow: auto;
+  z-index: 999999;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 12px;
+  font-size: 13px;
+}
+
+.dtuSpec-title {
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.dtuSpec-close {
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.dtuSpec-close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dtuSpec-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.dtuSpec-small {
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+}
+
+.dtuSpec-select {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  margin: 6px 0 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.dtuSpec-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.dtuSpec-course {
+  margin: 6px 0;
+}
+
+.dtuSpec-in {
+  color: #0a7a0a;
+}
+
+.dtuSpec-out {
+  color: #c01818;
+}
+
+.dtuSpec-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.dtuSpec-dot.in {
+  background: #0a7a0a;
+}
+
+.dtuSpec-dot.out {
+  background: #c01818;
+}
+
+.dtuSpec-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.65);
+  white-space: nowrap;
+}
