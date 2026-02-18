@@ -6,7 +6,7 @@
   "host_permissions": ["https://studieplan.dtu.dk/*"],
   "content_scripts": [
     {
-      "matches": ["https://studieplan.dtu.dk/*"],
+      "matches": ["https://studieplan.dtu.dk/*", "https://kurser.dtu.dk/*"],
       "run_at": "document_idle",
       "css": ["content/styles.css"],
       "js": ["content/cse_specializations.js", "content/content.js"]

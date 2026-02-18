@@ -8,6 +8,7 @@
 // =========================
 
 const STORAGE_SPEC_KEY = "dtuSpec.cse.selectedSpecId";
+const STORAGE_WIDGET_MIN_KEY = "dtuSpec.widgetMinimized";
 const COURSE_CODE_RE = /^\d{5}$/;
 const ROOT_CLASS = "dtuSpec-root";
 const nfDa = new Intl.NumberFormat("da-DK", { maximumFractionDigits: 1 });
@@ -26,6 +27,15 @@ function isInsideDialogLike(el) {
   return !!el.closest?.(
     '[role="dialog"], [aria-modal="true"], .modal, .dialog, .MuiDialog-root, .cdk-overlay-container',
   );
+}
+
+async function getWidgetMinimized() {
+  const res = await chrome.storage.sync.get([STORAGE_WIDGET_MIN_KEY]);
+  return !!res[STORAGE_WIDGET_MIN_KEY];
+}
+
+async function setWidgetMinimized(val) {
+  await chrome.storage.sync.set({ [STORAGE_WIDGET_MIN_KEY]: !!val });
 }
 
 // ---------- storage ----------
@@ -116,7 +126,7 @@ function annotateBadges(specId, spec, plannedCodes) {
 // ---------- widget ----------
 let widgetEl = null;
 
-function ensureWidget() {
+async function ensureWidget() {
   if (widgetEl) return;
 
   widgetEl = document.createElement("div");
@@ -124,37 +134,58 @@ function ensureWidget() {
   widgetEl.innerHTML = `
     <div class="dtuSpec-title">
       <div>DTU CSE Specialization</div>
-      <button type="button" class="dtuSpec-close" aria-label="Hide widget">✕</button>
+      <div class="dtuSpec-actions">
+        <button type="button" class="dtuSpec-btn dtuSpec-toggle" aria-label="Minimize">▾</button>
+      </div>
     </div>
 
-    <label class="dtuSpec-small" for="dtuSpecSelect">Specialization</label>
-    <select
-      id="dtuSpecSelect"
-      name="dtuSpecSelect"
-      class="dtuSpec-select"
-      autocomplete="off"
-    ></select>
+    <div class="dtuSpec-body">
+      <label class="dtuSpec-small" for="dtuSpecSelect">Specialization</label>
+      <select id="dtuSpecSelect" name="dtuSpecSelect" class="dtuSpec-select" autocomplete="off"></select>
 
-    <div class="dtuSpec-note dtuSpec-small" style="margin-top:-4px; margin-bottom:8px;" hidden></div>
+      <div class="dtuSpec-note dtuSpec-small" style="margin-top:-4px; margin-bottom:8px;" hidden></div>
 
-    <div class="dtuSpec-row">
-      <div>Progress</div>
-      <div class="dtuSpec-progress"></div>
+      <div class="dtuSpec-row">
+        <div>Progress</div>
+        <div class="dtuSpec-progress"></div>
+      </div>
+
+      <div class="dtuSpec-small">
+        Auto-counts the course codes currently present in your Study Planner view.
+      </div>
+
+      <ul class="dtuSpec-list"></ul>
     </div>
-
-    <div class="dtuSpec-small">
-      Auto-counts the course codes currently present in your Study Planner view.
-    </div>
-
-    <ul class="dtuSpec-list"></ul>
   `;
 
   document.body.appendChild(widgetEl);
+
+  // restore minimized state
+  const minimized = await getWidgetMinimized();
+  widgetEl.dataset.minimized = minimized ? "true" : "false";
+  widgetEl.querySelector(".dtuSpec-toggle").textContent = minimized ? "▸" : "▾";
+  widgetEl
+    .querySelector(".dtuSpec-toggle")
+    .setAttribute("aria-label", minimized ? "Expand" : "Minimize");
 
   widgetEl.querySelector(".dtuSpec-close")?.addEventListener("click", () => {
     widgetEl?.remove();
     widgetEl = null;
   });
+
+  widgetEl
+    .querySelector(".dtuSpec-toggle")
+    ?.addEventListener("click", async () => {
+      const isMin = widgetEl.dataset.minimized === "true";
+      const next = !isMin;
+      widgetEl.dataset.minimized = next ? "true" : "false";
+
+      const btn = widgetEl.querySelector(".dtuSpec-toggle");
+      btn.textContent = next ? "▸" : "▾";
+      btn.setAttribute("aria-label", next ? "Expand" : "Minimize");
+
+      await setWidgetMinimized(next);
+    });
 
   widgetEl
     .querySelector("#dtuSpecSelect")
@@ -166,8 +197,9 @@ function ensureWidget() {
     });
 }
 
-function renderWidget(specId, spec, plannedCodes, ectsSum) {
-  ensureWidget();
+// ✅ IMPORTANT: renderWidget must be async and await ensureWidget
+async function renderWidget(specId, spec, plannedCodes, ectsSum) {
+  await ensureWidget();
 
   // Update select options (without recreating the <select> element)
   const selectEl = widgetEl.querySelector("#dtuSpecSelect");
@@ -230,6 +262,8 @@ function scheduleRefresh(force = false) {
 }
 
 async function refresh() {
+  if (!SPECIALIZATIONS) return;
+
   isRendering = true;
   try {
     const specId = await getSelectedSpecId();
@@ -237,10 +271,10 @@ async function refresh() {
     const planned = getPlannedCourseCodes();
     const ectsSum = sumEctsForSpec(spec, planned);
 
-    renderWidget(specId, spec, planned, ectsSum);
+    // await renderWidget
+    await renderWidget(specId, spec, planned, ectsSum);
     annotateBadges(specId, spec, planned);
   } finally {
-    // release guard after DOM updates land
     setTimeout(() => {
       isRendering = false;
     }, 0);

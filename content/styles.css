@@ -54,18 +54,6 @@
   margin-bottom: 8px;
 }
 
-.dtuSpec-close {
-  cursor: pointer;
-  opacity: 0.7;
-  padding: 2px 6px;
-  border-radius: 8px;
-}
-
-.dtuSpec-close:hover {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.05);
-}
-
 .dtuSpec-row {
   display: flex;
   justify-content: space-between;
@@ -105,23 +93,6 @@
   color: #c01818;
 }
 
-.dtuSpec-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  margin-right: 6px;
-  vertical-align: middle;
-}
-
-.dtuSpec-dot.in {
-  background: #0a7a0a;
-}
-
-.dtuSpec-dot.out {
-  background: #c01818;
-}
-
 .dtuSpec-tag {
   display: inline-block;
   margin-left: 6px;
@@ -132,4 +103,38 @@
   font-size: 11px;
   color: rgba(0, 0, 0, 0.65);
   white-space: nowrap;
+}
+/* minimized mode */
+.dtuSpec-widget[data-minimized="true"] {
+  width: 230px;
+  max-height: unset;
+  overflow: hidden;
+  padding: 10px 12px;
+}
+
+.dtuSpec-widget[data-minimized="true"] .dtuSpec-body {
+  display: none;
+}
+
+.dtuSpec-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dtuSpec-btn {
+  border: 0;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dtuSpec-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+/* --- small polish when minimized --- */
+.dtuSpec-widget[data-minimized="true"] .dtuSpec-title {
+  margin-bottom: 0;
 }
