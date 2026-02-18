@@ -1,5 +1,9 @@
+// =========================
+// DTU Specialization Helper
+// Auto ECTS tally + clean badges + green/red list
+// =========================
+
 // --- Specialization data (CSE → Software Engineering) ---
-// Source: DTU specialization page (at least 25 ECTS among listed courses; terminated also count). :contentReference[oaicite:2]{index=2}
 const SPEC = {
   id: "cse-software-engineering",
   name: "Software Engineering",
@@ -18,36 +22,50 @@ const SPEC = {
     "02270": { ects: 5, title: "Cybersecurity Fundamentals" },
     "02291": { ects: 5, title: "System Integration" },
   },
-  terminatedAlsoCount: ["02221", "02239", "02261", "02263"],
 };
 
-// --- Styling (prefix classes to avoid clashes) ---
-const STYLE_ID = "dtu-spec-style";
+const COURSE_CODE_RE = /^\d{5}$/;
+const STYLE_ID = "dtuSpec-style";
+const ROOT_CLASS = "dtuSpec-root";
+
+const nfDa = new Intl.NumberFormat("da-DK", { maximumFractionDigits: 1 });
+
+// ---------- helpers ----------
+function isInsideOurUi(el) {
+  return !!el.closest?.(`.${ROOT_CLASS}`);
+}
+
 function ensureStyles() {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement("style");
   style.id = STYLE_ID;
   style.textContent = `
+    .${ROOT_CLASS} { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
     .dtuSpec-badge {
-      display:inline-flex; align-items:center; gap:6px;
-      font-size: 11px; line-height: 1;
-      padding: 2px 6px; border-radius: 999px;
-      border: 1px solid rgba(0,0,0,.15);
-      background: rgba(0,0,0,.04);
+      display:inline-flex;
+      align-items:center;
+      font-size: 11px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.18);
+      background: rgba(0,0,0,.05);
       margin-left: 6px;
-      cursor: pointer;
       user-select: none;
+      white-space: nowrap;
     }
-    .dtuSpec-badge[data-selected="true"] {
-      background: rgba(0, 128, 0, .10);
+    .dtuSpec-badge[data-inplan="true"] {
       border-color: rgba(0, 128, 0, .35);
+      background: rgba(0, 128, 0, .10);
     }
+
     .dtuSpec-widget {
       position: fixed;
       right: 16px;
       bottom: 16px;
-      width: 320px;
-      max-height: 45vh;
+      width: 360px;
+      max-height: 50vh;
       overflow: auto;
       z-index: 999999;
       border-radius: 12px;
@@ -55,84 +73,147 @@ function ensureStyles() {
       background: #fff;
       box-shadow: 0 10px 30px rgba(0,0,0,.12);
       padding: 12px;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       font-size: 13px;
     }
-    .dtuSpec-title { font-weight: 700; margin-bottom: 6px; }
+    .dtuSpec-title { font-weight: 700; margin-bottom: 6px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .dtuSpec-close { cursor:pointer; opacity:.7; padding: 2px 6px; border-radius: 8px; }
+    .dtuSpec-close:hover { opacity:1; background: rgba(0,0,0,.05); }
+
     .dtuSpec-row { display:flex; justify-content:space-between; gap: 8px; margin: 6px 0; }
     .dtuSpec-small { color: rgba(0,0,0,.65); font-size: 12px; }
-    .dtuSpec-list { margin: 8px 0 0; padding-left: 18px; }
-    .dtuSpec-close { float:right; cursor:pointer; opacity: .7; }
-    .dtuSpec-close:hover { opacity: 1; }
+
+    .dtuSpec-list { margin: 10px 0 0; padding-left: 18px; }
+    .dtuSpec-course { margin: 6px 0; }
+    .dtuSpec-in { color: #0a7a0a; }     /* green */
+    .dtuSpec-out { color: #c01818; }    /* red */
+    .dtuSpec-dot { display:inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
+    .dtuSpec-dot.in { background: #0a7a0a; }
+    .dtuSpec-dot.out { background: #c01818; }
   `;
   document.head.appendChild(style);
 }
 
-// --- Storage helpers ---
-const STORAGE_KEY = `dtuSpec.selected.${SPEC.id}`;
+// ---------- auto-detect planned courses ----------
+function getPlannedCourseCodes() {
+  // Strategy:
+  // 1) Find standalone text nodes that are exactly 5 digits.
+  // 2) Exclude our widget.
+  // 3) Use a Set to avoid double counting (basket + semester etc.)
+  const codes = new Set();
 
-async function getSelected() {
-  const result = await chrome.storage.local.get([STORAGE_KEY]);
-  return new Set(result[STORAGE_KEY] || []);
+  // We scan leaf-ish elements only and only when the entire text is the code.
+  const codeEls = document.querySelectorAll("a, span, strong, div");
+  for (const el of codeEls) {
+    if (!el || isInsideOurUi(el)) continue;
+    if (el.childElementCount !== 0) continue;
+
+    const txt = (el.textContent || "").trim();
+    if (!COURSE_CODE_RE.test(txt)) continue;
+
+    codes.add(txt);
+  }
+
+  return codes;
 }
-async function setSelected(set) {
-  await chrome.storage.local.set({ [STORAGE_KEY]: Array.from(set) });
-}
 
-// --- UI: floating progress widget ---
-let widgetEl = null;
-
-function ectsFor(code) {
-  return SPEC.courses[code]?.ects ?? 0;
-}
-
-function missingCourses(selectedSet) {
-  return Object.keys(SPEC.courses).filter((c) => !selectedSet.has(c));
-}
-
-function sumEcts(selectedSet) {
+function sumSpecEcts(plannedCodes) {
   let sum = 0;
-  for (const c of selectedSet) sum += ectsFor(c);
+  for (const code of plannedCodes) {
+    if (SPEC.courses[code]) sum += SPEC.courses[code].ects;
+  }
   return sum;
 }
 
-async function renderWidget() {
+// ---------- badges (no clicking) ----------
+function removeOldBadges() {
+  // If you previously had “badge spam”, this clears it.
+  document.querySelectorAll(".dtuSpec-badge").forEach((b) => b.remove());
+}
+
+function annotateSpecBadges(plannedCodes) {
+  // Only attach next to elements whose text is EXACTLY the course code.
+  const els = document.querySelectorAll("a, span, strong, div");
+  for (const el of els) {
+    if (!el || isInsideOurUi(el)) continue;
+    if (el.childElementCount !== 0) continue;
+
+    const code = (el.textContent || "").trim();
+    if (!COURSE_CODE_RE.test(code)) continue;
+    if (!SPEC.courses[code]) continue;
+
+    // Prevent duplicates at same location
+    if (el.dataset.dtuSpecBadged === "1") {
+      // Update in-plan state if needed
+      const next = el.nextElementSibling;
+      if (
+        next?.classList?.contains("dtuSpec-badge") &&
+        next.dataset?.code === code
+      ) {
+        next.dataset.inplan = plannedCodes.has(code) ? "true" : "false";
+      }
+      continue;
+    }
+
+    const badge = document.createElement("span");
+    badge.className = "dtuSpec-badge";
+    badge.dataset.code = code;
+    badge.dataset.inplan = plannedCodes.has(code) ? "true" : "false";
+    badge.textContent = `Counts (${nfDa.format(SPEC.courses[code].ects)} ECTS)`;
+
+    el.insertAdjacentElement("afterend", badge);
+    el.dataset.dtuSpecBadged = "1";
+  }
+}
+
+// ---------- widget ----------
+let widgetEl = null;
+
+function renderWidget(plannedCodes) {
   ensureStyles();
-  const selected = await getSelected();
-  const ects = sumEcts(selected);
-  const missing = missingCourses(selected);
+
+  const ects = sumSpecEcts(plannedCodes);
+  const required = SPEC.requiredEcts;
 
   if (!widgetEl) {
     widgetEl = document.createElement("div");
-    widgetEl.className = "dtuSpec-widget";
+    widgetEl.className = `dtuSpec-widget ${ROOT_CLASS}`;
     document.body.appendChild(widgetEl);
   }
 
+  const rows = Object.keys(SPEC.courses)
+    .sort()
+    .map((code) => {
+      const inPlan = plannedCodes.has(code);
+      const cls = inPlan ? "dtuSpec-in" : "dtuSpec-out";
+      const dot = inPlan ? "in" : "out";
+      const c = SPEC.courses[code];
+      return `
+        <li class="dtuSpec-course ${cls}">
+          <span class="dtuSpec-dot ${dot}"></span>
+          <b>${code}</b> — ${c.title} (${nfDa.format(c.ects)} ECTS)
+        </li>
+      `;
+    })
+    .join("");
+
   widgetEl.innerHTML = `
     <div class="dtuSpec-title">
-      ${SPEC.name}
-      <span class="dtuSpec-close" title="Hide">✕</span>
+      <div>${SPEC.name}</div>
+      <div class="dtuSpec-close" title="Hide">✕</div>
     </div>
+
     <div class="dtuSpec-row">
       <div>Progress</div>
-      <div><b>${ects.toFixed(1)}</b> / ${SPEC.requiredEcts} ECTS</div>
+      <div><b>${nfDa.format(ects)}</b> / ${nfDa.format(required)} ECTS</div>
     </div>
+
     <div class="dtuSpec-small">
-      Click a badge next to a course number to add/remove it from your specialization tally.
+      Auto-counts courses currently visible in your Study Planner/basket.
     </div>
-    <div style="margin-top:8px;">
-      <div class="dtuSpec-small"><b>Missing (from the specialization list)</b></div>
-      <ul class="dtuSpec-list">
-        ${missing
-          .slice(0, 8)
-          .map(
-            (c) =>
-              `<li>${c} — ${SPEC.courses[c].title} (${SPEC.courses[c].ects} ECTS)</li>`,
-          )
-          .join("")}
-        ${missing.length > 8 ? `<li class="dtuSpec-small">…and ${missing.length - 8} more</li>` : ""}
-      </ul>
-    </div>
+
+    <ul class="dtuSpec-list">
+      ${rows}
+    </ul>
   `;
 
   widgetEl.querySelector(".dtuSpec-close")?.addEventListener("click", () => {
@@ -141,80 +222,32 @@ async function renderWidget() {
   });
 }
 
-// --- Badge injection ---
-// Strategy: find elements whose text contains a specialization course number token (e.g. "02267")
-const COURSE_CODES = new Set(Object.keys(SPEC.courses));
-
-function findCourseCodesInText(text) {
-  // Match 5-digit numbers and keep ones that are specialization codes
-  const matches = text.match(/\b\d{5}\b/g);
-  if (!matches) return [];
-  return matches.filter((m) => COURSE_CODES.has(m));
+// ---------- refresh loop (debounced) ----------
+let refreshTimer = null;
+function scheduleRefresh() {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(() => {
+    refreshTimer = null;
+    refresh();
+  }, 250);
 }
 
-async function addBadges(root = document.body) {
-  ensureStyles();
-  const selected = await getSelected();
-
-  // Keep it lightweight: scan only “leaf-ish” elements
-  const candidates = root.querySelectorAll("a, span, div, td, li, p, button");
-  for (const el of candidates) {
-    if (!el || el.dataset.dtuSpecScanned === "1") continue;
-    const text = (el.textContent || "").trim();
-    if (!text) continue;
-
-    const codes = findCourseCodesInText(text);
-    if (codes.length === 0) {
-      el.dataset.dtuSpecScanned = "1";
-      continue;
-    }
-
-    // Add one badge per code found (usually just one)
-    for (const code of codes) {
-      // Avoid duplicates
-      if (el.querySelector?.(`[data-dtu-spec-badge="${code}"]`)) continue;
-
-      const badge = document.createElement("span");
-      badge.className = "dtuSpec-badge";
-      badge.dataset.dtuSpecBadge = code;
-      badge.dataset.selected = selected.has(code) ? "true" : "false";
-      badge.title = `${SPEC.name}: ${SPEC.courses[code].title} (${SPEC.courses[code].ects} ECTS)`;
-
-      badge.textContent = `Counts (${SPEC.courses[code].ects} ECTS)`;
-
-      badge.addEventListener("click", async (ev) => {
-        ev.stopPropagation();
-        ev.preventDefault();
-        const s = await getSelected();
-        if (s.has(code)) s.delete(code);
-        else s.add(code);
-        await setSelected(s);
-        badge.dataset.selected = s.has(code) ? "true" : "false";
-        await renderWidget();
-      });
-
-      el.appendChild(badge);
-    }
-
-    el.dataset.dtuSpecScanned = "1";
-  }
+function refresh() {
+  const planned = getPlannedCourseCodes();
+  renderWidget(planned);
+  // Badges: keep them clean and non-duplicated
+  annotateSpecBadges(planned);
 }
 
 function startObserver() {
-  // Study Planner is dynamic → observe DOM changes and re-annotate
-  const obs = new MutationObserver((mutations) => {
-    for (const m of mutations) {
-      for (const node of m.addedNodes) {
-        if (node.nodeType === Node.ELEMENT_NODE) addBadges(node);
-      }
-    }
-  });
+  const obs = new MutationObserver(() => scheduleRefresh());
   obs.observe(document.documentElement, { childList: true, subtree: true });
 }
 
-// --- Boot ---
-(async function init() {
-  await renderWidget();
-  await addBadges(document.body);
+// ---------- boot ----------
+(function init() {
+  ensureStyles();
+  removeOldBadges(); // clears spam from earlier versions
+  refresh();
   startObserver();
 })();
