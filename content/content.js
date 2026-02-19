@@ -28,6 +28,12 @@ const PROGRAMMES = {
     defaultSpecId: "catalysis-and-sustainable-chemistry",
     specializations: globalThis.DTU_APCHEM_SPECIALIZATIONS,
   },
+  "architectural-engineering": {
+    name: "Architectural Engineering",
+    specStorageKey: "dtuSpec.archeng.selectedSpecId",
+    defaultSpecId: "indoor-environment",
+    specializations: globalThis.DTU_ARCHENG_SPECIALIZATIONS,
+  },
 };
 
 function getProgrammeOrFallback(id) {
@@ -47,6 +53,11 @@ function warnIfMissingData() {
   if (!PROGRAMMES["applied-chemistry"].specializations) {
     console.error(
       "DTU_APCHEM_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["architectural-engineering"].specializations) {
+    console.error(
+      "DTU_ARCHENG_SPECIALIZATIONS not found. Check manifest.js order.",
     );
   }
 }
