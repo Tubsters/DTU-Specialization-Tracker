@@ -21,6 +21,13 @@
         "content/specilizations/biotechnology_specializations.js",
         "content/specilizations/business_analytics_specializations.js",
         "content/specilizations/chbe_specializations.js",
+        "content/specilizations/civil_engineering_specializations.js",
+        "content/specilizations/ctsd_specializations.js",
+        "content/specilizations/design_and_innovation_specializations.js",
+        "content/specilizations/earth_space_physics_specializations.js",
+        "content/specilizations/electrical_engineering_specializations.js",
+        "content/specilizations/engineering_acoustics_specializations.js",
+        "content/specilizations/engineering_light_specializations.js",
 
         "content/content.js"
       ]

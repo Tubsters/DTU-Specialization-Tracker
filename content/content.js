@@ -58,6 +58,48 @@ const PROGRAMMES = {
     defaultSpecId: "chemical-and-biochemical-process-technology",
     specializations: globalThis.DTU_CHBE_SPECIALIZATIONS,
   },
+  "civil-engineering": {
+    name: "Civil Engineering",
+    specStorageKey: "dtuSpec.civil.selectedSpecId",
+    defaultSpecId: "bridges-pavements-and-large-structures",
+    specializations: globalThis.DTU_CIVILENG_SPECIALIZATIONS,
+  },
+  "communication-technologies-and-system-design": {
+    name: "Communication Technologies and System Design",
+    specStorageKey: "dtuSpec.ctsd.selectedSpecId",
+    defaultSpecId: "high-speed-communication",
+    specializations: globalThis.DTU_CTSD_SPECIALIZATIONS,
+  },
+  "design-and-innovation": {
+    name: "Design and Innovation",
+    specStorageKey: "dtuSpec.desinnov.selectedSpecId",
+    defaultSpecId: "design-of-complex-technical-systems",
+    specializations: globalThis.DTU_DESIGNINNOV_SPECIALIZATIONS,
+  },
+  "earth-and-space-physics-and-engineering": {
+    name: "Earth and Space Physics and Engineering",
+    specStorageKey: "dtuSpec.espace.selectedSpecId",
+    defaultSpecId: "earth-observation",
+    specializations: globalThis.DTU_ESPACE_SPECIALIZATIONS,
+  },
+  "electrical-engineering": {
+    name: "Electrical Engineering",
+    specStorageKey: "dtuSpec.ee.selectedSpecId",
+    defaultSpecId: "electronics",
+    specializations: globalThis.DTU_EE_SPECIALIZATIONS,
+  },
+  "engineering-acoustics": {
+    name: "Engineering Acoustics",
+    specStorageKey: "dtuSpec.engac.selectedSpecId",
+    defaultSpecId: "audio-and-transducer-technology",
+    specializations: globalThis.DTU_ENGAC_SPECIALIZATIONS,
+  },
+  "engineering-light": {
+    name: "Engineering Light",
+    specStorageKey: "dtuSpec.englight.selectedSpecId",
+    defaultSpecId: "instrumentations-and-applications",
+    specializations: globalThis.DTU_ENGLIGHT_SPECIALIZATIONS,
+  },
 };
 
 function getProgrammeOrFallback(id) {
@@ -102,6 +144,41 @@ function warnIfMissingData() {
   if (!PROGRAMMES["chemical-and-biochemical-engineering"].specializations) {
     console.error(
       "DTU_CHBE_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["civil-engineering"].specializations) {
+    console.error(
+      "DTU_CIVILENG_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (
+    !PROGRAMMES["communication-technologies-and-system-design"].specializations
+  ) {
+    console.error(
+      "DTU_CTSD_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["design-and-innovation"].specializations) {
+    console.error(
+      "DTU_DESIGNINNOV_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["earth-and-space-physics-and-engineering"].specializations) {
+    console.error(
+      "DTU_ESPACE_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["electrical-engineering"].specializations) {
+    console.error("DTU_EE_SPECIALIZATIONS not found. Check manifest.js order.");
+  }
+  if (!PROGRAMMES["engineering-acoustics"].specializations) {
+    console.error(
+      "DTU_ENGAC_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["engineering-light"].specializations) {
+    console.error(
+      "DTU_ENGLIGHT_SPECIALIZATIONS not found. Check manifest.js order.",
     );
   }
 }
@@ -367,7 +444,9 @@ async function renderWidget(
       const title = entry.title ? ` — ${entry.title}` : "";
 
       const mandatoryTag = entry.mandatory
-        ? `<span class="dtuSpec-tag dtuSpec-tag--mandatory">mandatory</span>`
+        ? `<span class="dtuSpec-tag dtuSpec-tag--mandatory">${
+            entry.alternativeGroup ? "mandatory (one of)" : "mandatory"
+          }</span>`
         : "";
 
       const termTag = entry.terminated
