@@ -42,6 +42,13 @@
         "content/specializations/sustainable_fisheries_aquaculture.js",
         "content/specializations/wind_energy.js",
 
+        "content/constants_and_programmes.js",
+        "content/storage.js",
+        "content/planner.js",
+        "content/badges.js",
+        "content/ui.js",
+        "content/refresh.js",
+
         "content/content.js"
       ]
     }
