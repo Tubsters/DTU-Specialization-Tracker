@@ -1,21 +1,54 @@
 // content/content.js
 // =========================
-// DTU Specialization Helper (CSE)
-// - Choose specialization in widget
+// DTU Specialization Helper
+// - Choose programme + specialization in widget
 // - Auto-count ECTS based on courses in Study Planner
 // - Green (in plan) / Red (missing)
 // - Clean, non-duplicated badges
 // =========================
 
-const STORAGE_SPEC_KEY = "dtuSpec.cse.selectedSpecId";
+const STORAGE_PROGRAM_KEY = "dtuSpec.selectedProgrammeId";
 const STORAGE_WIDGET_MIN_KEY = "dtuSpec.widgetMinimized";
+
 const COURSE_CODE_RE = /^\d{5}$/;
 const ROOT_CLASS = "dtuSpec-root";
 const nfDa = new Intl.NumberFormat("da-DK", { maximumFractionDigits: 1 });
 
-const SPECIALIZATIONS = globalThis.DTU_CSE_SPECIALIZATIONS;
-if (!SPECIALIZATIONS) {
-  console.error("DTU_CSE_SPECIALIZATIONS not found. Check manifest.js order.");
+// Programmes + specialization sources (loaded via manifest order)
+const PROGRAMMES = {
+  cse: {
+    name: "Computer Science and Engineering",
+    specStorageKey: "dtuSpec.cse.selectedSpecId",
+    defaultSpecId: "software-engineering",
+    specializations: globalThis.DTU_CSE_SPECIALIZATIONS,
+  },
+  "applied-chemistry": {
+    name: "Applied Chemistry",
+    specStorageKey: "dtuSpec.apchem.selectedSpecId",
+    defaultSpecId: "catalysis-and-sustainable-chemistry",
+    specializations: globalThis.DTU_APCHEM_SPECIALIZATIONS,
+  },
+};
+
+function getProgrammeOrFallback(id) {
+  return PROGRAMMES[id] ? id : "cse";
+}
+
+function getProgrammeConfig(id) {
+  return PROGRAMMES[getProgrammeOrFallback(id)];
+}
+
+function warnIfMissingData() {
+  if (!PROGRAMMES.cse.specializations) {
+    console.error(
+      "DTU_CSE_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["applied-chemistry"].specializations) {
+    console.error(
+      "DTU_APCHEM_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
 }
 
 // ---------- UI helpers ----------
@@ -38,17 +71,31 @@ async function setWidgetMinimized(val) {
   await chrome.storage.sync.set({ [STORAGE_WIDGET_MIN_KEY]: !!val });
 }
 
-// ---------- storage ----------
-async function getSelectedSpecId() {
-  const res = await chrome.storage.sync.get([STORAGE_SPEC_KEY]);
-  const id = res[STORAGE_SPEC_KEY];
-  if (id && SPECIALIZATIONS?.[id]) return id;
-  return "software-engineering";
+// ---------- programme storage ----------
+async function getSelectedProgrammeId() {
+  const res = await chrome.storage.sync.get([STORAGE_PROGRAM_KEY]);
+  return getProgrammeOrFallback(res[STORAGE_PROGRAM_KEY]);
 }
 
-async function setSelectedSpecId(id) {
-  if (!SPECIALIZATIONS?.[id]) return;
-  await chrome.storage.sync.set({ [STORAGE_SPEC_KEY]: id });
+async function setSelectedProgrammeId(id) {
+  await chrome.storage.sync.set({
+    [STORAGE_PROGRAM_KEY]: getProgrammeOrFallback(id),
+  });
+}
+
+// ---------- specialization storage (per programme) ----------
+async function getSelectedSpecIdForProgramme(programme) {
+  const specs = programme.specializations || {};
+  const res = await chrome.storage.sync.get([programme.specStorageKey]);
+  const id = res[programme.specStorageKey];
+  if (id && specs[id]) return id;
+  return programme.defaultSpecId;
+}
+
+async function setSelectedSpecIdForProgramme(programme, id) {
+  const specs = programme.specializations || {};
+  if (!specs[id]) return;
+  await chrome.storage.sync.set({ [programme.specStorageKey]: id });
 }
 
 // ---------- course detection (auto tally) ----------
@@ -72,6 +119,7 @@ function getPlannedCourseCodes() {
 }
 
 function sumEctsForSpec(spec, plannedCodes) {
+  if (!spec?.courses) return 0;
   let sum = 0;
   for (const code of plannedCodes) {
     const entry = spec.courses[code];
@@ -85,7 +133,9 @@ function removeAllBadges() {
   document.querySelectorAll(".dtuSpec-badge").forEach((b) => b.remove());
 }
 
-function annotateBadges(specId, spec, plannedCodes) {
+function annotateBadges(badgeTagId, spec, plannedCodes) {
+  if (!spec?.courses) return;
+
   const els = document.querySelectorAll("a, span, strong, div");
 
   for (const el of els) {
@@ -98,7 +148,7 @@ function annotateBadges(specId, spec, plannedCodes) {
     if (!COURSE_CODE_RE.test(code)) continue;
     if (!spec.courses[code]) continue;
 
-    if (el.dataset.dtuSpecBadged === specId) {
+    if (el.dataset.dtuSpecBadged === badgeTagId) {
       const next = el.nextElementSibling;
       if (
         next?.classList?.contains("dtuSpec-badge") &&
@@ -119,7 +169,7 @@ function annotateBadges(specId, spec, plannedCodes) {
     badge.textContent = `Counts (${nfDa.format(spec.courses[code].ects)} ECTS)`;
 
     el.insertAdjacentElement("afterend", badge);
-    el.dataset.dtuSpecBadged = specId;
+    el.dataset.dtuSpecBadged = badgeTagId;
   }
 }
 
@@ -133,14 +183,20 @@ async function ensureWidget() {
   widgetEl.className = `dtuSpec-widget ${ROOT_CLASS}`;
   widgetEl.innerHTML = `
     <div class="dtuSpec-title">
-      <div>DTU CSE Specialization</div>
+      <div class="dtuSpec-headline">
+        <div>DTU Specialization</div>
+        <div class="dtuSpec-small dtuSpec-programmeName"></div>
+      </div>
       <div class="dtuSpec-actions">
         <button type="button" class="dtuSpec-btn dtuSpec-toggle" aria-label="Minimize">▾</button>
       </div>
     </div>
 
     <div class="dtuSpec-body">
-      <label class="dtuSpec-small" for="dtuSpecSelect">Specialization</label>
+      <label class="dtuSpec-small" for="dtuProgrammeSelect">Study line</label>
+      <select id="dtuProgrammeSelect" name="dtuProgrammeSelect" class="dtuSpec-select" autocomplete="off"></select>
+
+      <label class="dtuSpec-small" for="dtuSpecSelect" style="margin-top:6px;">Specialization</label>
       <select id="dtuSpecSelect" name="dtuSpecSelect" class="dtuSpec-select" autocomplete="off"></select>
 
       <div class="dtuSpec-note dtuSpec-small" style="margin-top:-4px; margin-bottom:8px;" hidden></div>
@@ -168,11 +224,6 @@ async function ensureWidget() {
     .querySelector(".dtuSpec-toggle")
     .setAttribute("aria-label", minimized ? "Expand" : "Minimize");
 
-  widgetEl.querySelector(".dtuSpec-close")?.addEventListener("click", () => {
-    widgetEl?.remove();
-    widgetEl = null;
-  });
-
   widgetEl
     .querySelector(".dtuSpec-toggle")
     ?.addEventListener("click", async () => {
@@ -188,29 +239,57 @@ async function ensureWidget() {
     });
 
   widgetEl
+    .querySelector("#dtuProgrammeSelect")
+    ?.addEventListener("change", async (e) => {
+      await setSelectedProgrammeId(e.target.value);
+      removeAllBadges();
+      scheduleRefresh(true);
+    });
+
+  widgetEl
     .querySelector("#dtuSpecSelect")
     ?.addEventListener("change", async (e) => {
-      const newId = e.target.value;
-      await setSelectedSpecId(newId);
+      const programmeId = widgetEl.querySelector("#dtuProgrammeSelect").value;
+      const programme = getProgrammeConfig(programmeId);
+
+      await setSelectedSpecIdForProgramme(programme, e.target.value);
       removeAllBadges();
       scheduleRefresh(true);
     });
 }
 
-// ✅ IMPORTANT: renderWidget must be async and await ensureWidget
-async function renderWidget(specId, spec, plannedCodes, ectsSum) {
+// ✅ renderWidget is async and awaits ensureWidget
+async function renderWidget(
+  programmeId,
+  programme,
+  specId,
+  spec,
+  plannedCodes,
+  ectsSum,
+) {
   await ensureWidget();
 
-  // Update select options (without recreating the <select> element)
-  const selectEl = widgetEl.querySelector("#dtuSpecSelect");
-  selectEl.innerHTML = Object.entries(SPECIALIZATIONS)
+  // Programme name in header
+  widgetEl.querySelector(".dtuSpec-programmeName").textContent = programme.name;
+
+  // Programme select options
+  const programmeSelect = widgetEl.querySelector("#dtuProgrammeSelect");
+  programmeSelect.innerHTML = Object.entries(PROGRAMMES)
+    .map(([id, p]) => `<option value="${id}">${p.name}</option>`)
+    .join("");
+  programmeSelect.value = programmeId;
+
+  // Spec select options
+  const specs = programme.specializations || {};
+  const specSelect = widgetEl.querySelector("#dtuSpecSelect");
+  specSelect.innerHTML = Object.entries(specs)
     .map(([id, s]) => `<option value="${id}">${s.name}</option>`)
     .join("");
-  selectEl.value = specId;
+  specSelect.value = specId;
 
   // Note
   const noteEl = widgetEl.querySelector(".dtuSpec-note");
-  if (spec.note) {
+  if (spec?.note) {
     noteEl.hidden = false;
     noteEl.textContent = spec.note;
   } else {
@@ -220,10 +299,10 @@ async function renderWidget(specId, spec, plannedCodes, ectsSum) {
 
   // Progress
   widgetEl.querySelector(".dtuSpec-progress").innerHTML =
-    `<b>${nfDa.format(ectsSum)}</b> / ${nfDa.format(spec.requiredEcts)} ECTS`;
+    `<b>${nfDa.format(ectsSum)}</b> / ${nfDa.format(spec?.requiredEcts ?? 0)} ECTS`;
 
   // List
-  const rowsHtml = Object.keys(spec.courses)
+  const rowsHtml = Object.keys(spec?.courses ?? {})
     .sort()
     .map((code) => {
       const entry = spec.courses[code];
@@ -262,18 +341,25 @@ function scheduleRefresh(force = false) {
 }
 
 async function refresh() {
-  if (!SPECIALIZATIONS) return;
+  warnIfMissingData();
 
   isRendering = true;
   try {
-    const specId = await getSelectedSpecId();
-    const spec = SPECIALIZATIONS[specId];
+    const programmeId = await getSelectedProgrammeId();
+    const programme = getProgrammeConfig(programmeId);
+
+    if (!programme.specializations) return;
+
+    const specId = await getSelectedSpecIdForProgramme(programme);
+    const spec = programme.specializations[specId];
+
     const planned = getPlannedCourseCodes();
     const ectsSum = sumEctsForSpec(spec, planned);
 
-    // await renderWidget
-    await renderWidget(specId, spec, planned, ectsSum);
-    annotateBadges(specId, spec, planned);
+    await renderWidget(programmeId, programme, specId, spec, planned, ectsSum);
+
+    // Use programme+spec as the badge tag id to avoid collisions
+    annotateBadges(`${programmeId}:${specId}`, spec, planned);
   } finally {
     setTimeout(() => {
       isRendering = false;

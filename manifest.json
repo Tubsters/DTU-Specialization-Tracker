@@ -13,7 +13,11 @@
       "matches": ["https://studieplan.dtu.dk/*", "https://kurser.dtu.dk/*"],
       "run_at": "document_idle",
       "css": ["content/styles.css"],
-      "js": ["content/cse_specializations.js", "content/content.js"]
+      "js": [
+        "content/specilizations/cse_specializations.js",
+        "content/specilizations/applied_chemistry_specializations.js",
+        "content/content.js"
+      ]
     }
   ]
 }
