@@ -130,6 +130,54 @@ const PROGRAMMES = {
     defaultSpecId: "management-and-analysis-of-operations",
     specializations: globalThis.DTU_IEM_SPECIALIZATIONS,
   },
+  "materials-and-manufacturing-engineering": {
+    name: "Materials and Manufacturing Engineering",
+    specStorageKey: "dtuSpec.mme.selectedSpecId",
+    defaultSpecId: "materials-engineering",
+    specializations: globalThis.DTU_MME_SPECIALIZATIONS,
+  },
+  "mathematical-modelling-and-computation": {
+    name: "Mathematical Modelling and Computation",
+    specStorageKey: "dtuSpec.mmc.selectedSpecId",
+    defaultSpecId: "applied-mathematical-analysis",
+    specializations: globalThis.DTU_MMC_SPECIALIZATIONS,
+  },
+  "mechanical-engineering": {
+    name: "Mechanical Engineering",
+    specStorageKey: "dtuSpec.mecheng.selectedSpecId",
+    defaultSpecId: "engineering-design-and-product-development",
+    specializations: globalThis.DTU_MECHENG_SPECIALIZATIONS,
+  },
+  "ocean-engineering": {
+    name: "Ocean Engineering",
+    specStorageKey: "dtuSpec.oceaneng.selectedSpecId",
+    defaultSpecId: "oceanography",
+    specializations: globalThis.DTU_OCEANENG_SPECIALIZATIONS,
+  },
+  "sustainable-energy-systems": {
+    name: "Sustainable Energy Systems",
+    specStorageKey: "dtuSpec.ses.selectedSpecId",
+    defaultSpecId: "digital-energy-systems",
+    specializations: globalThis.DTU_SES_SPECIALIZATIONS,
+  },
+  "sustainable-energy-technologies": {
+    name: "Sustainable Energy Technologies",
+    specStorageKey: "dtuSpec.setech.selectedSpecId",
+    defaultSpecId: "wind-energy",
+    specializations: globalThis.DTU_SETECH_SPECIALIZATIONS,
+  },
+  "sustainable-fisheries-and-aquaculture": {
+    name: "Sustainable Fisheries and Aquaculture",
+    specStorageKey: "dtuSpec.sfa.selectedSpecId",
+    defaultSpecId: "aquaculture",
+    specializations: globalThis.DTU_SFA_SPECIALIZATIONS,
+  },
+  "wind-energy": {
+    name: "Wind Energy",
+    specStorageKey: "dtuSpec.wind.selectedSpecId",
+    defaultSpecId: "digitalization-in-wind-energy",
+    specializations: globalThis.DTU_WIND_SPECIALIZATIONS,
+  },
 };
 
 function getProgrammeOrFallback(id) {
@@ -234,6 +282,46 @@ function warnIfMissingData() {
   if (!PROGRAMMES["industrial-engineering-and-management"].specializations) {
     console.error(
       "DTU_IEM_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["materials-and-manufacturing-engineering"].specializations) {
+    console.error(
+      "DTU_MME_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["mathematical-modelling-and-computation"].specializations) {
+    console.error(
+      "DTU_MMC_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["mechanical-engineering"].specializations) {
+    console.error(
+      "DTU_MECHENG_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["ocean-engineering"].specializations) {
+    console.error(
+      "DTU_OCEANENG_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["sustainable-energy-systems"].specializations) {
+    console.error(
+      "DTU_SES_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["sustainable-energy-technologies"].specializations) {
+    console.error(
+      "DTU_SETECH_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["sustainable-fisheries-and-aquaculture"].specializations) {
+    console.error(
+      "DTU_SFA_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["wind-energy"].specializations) {
+    console.error(
+      "DTU_WIND_SPECIALIZATIONS not found. Check manifest.js order.",
     );
   }
 }

@@ -33,6 +33,14 @@
         "content/specializations/food_technology.js",
         "content/specializations/human_centered_ai.js",
         "content/specializations/industrial_engineering_management.js",
+        "content/specializations/materials_manufacturing_engineering.js",
+        "content/specializations/mathematical_modelling_and_computation.js",
+        "content/specializations/mechanical_engineering.js",
+        "content/specializations/ocean_engineering.js",
+        "content/specializations/sustainable_energy_systems.js",
+        "content/specializations/sustainable_energy_technologies.js",
+        "content/specializations/sustainable_fisheries_aquaculture.js",
+        "content/specializations/wind_energy.js",
 
         "content/content.js"
       ]
