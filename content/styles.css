@@ -138,3 +138,9 @@
 .dtuSpec-widget[data-minimized="true"] .dtuSpec-title {
   margin-bottom: 0;
 }
+/* mandatory tag */
+.dtuSpec-tag--mandatory {
+  border-color: rgba(0, 128, 0, 0.35);
+  background: rgba(0, 128, 0, 0.08);
+  color: rgba(0, 90, 0, 0.9);
+}

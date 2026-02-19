@@ -17,6 +17,11 @@
         "content/specilizations/cse_specializations.js",
         "content/specilizations/applied_chemistry_specializations.js",
         "content/specilizations/architectural_engineering_specializations.js",
+        "content/specilizations/bioinformatics_specializations.js",
+        "content/specilizations/biotechnology_specializations.js",
+        "content/specilizations/business_analytics_specializations.js",
+        "content/specilizations/chbe_specializations.js",
+
         "content/content.js"
       ]
     }

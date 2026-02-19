@@ -34,6 +34,30 @@ const PROGRAMMES = {
     defaultSpecId: "indoor-environment",
     specializations: globalThis.DTU_ARCHENG_SPECIALIZATIONS,
   },
+  bioinformatics: {
+    name: "Bioinformatics",
+    specStorageKey: "dtuSpec.bioinf.selectedSpecId",
+    defaultSpecId: "biomedical-bioinformatics",
+    specializations: globalThis.DTU_BIOINF_SPECIALIZATIONS,
+  },
+  biotechnology: {
+    name: "Biotechnology",
+    specStorageKey: "dtuSpec.biotech.selectedSpecId",
+    defaultSpecId: "biosolutions",
+    specializations: globalThis.DTU_BIOTECH_SPECIALIZATIONS,
+  },
+  "business-analytics": {
+    name: "Business Analytics",
+    specStorageKey: "dtuSpec.busan.selectedSpecId",
+    defaultSpecId: "predictive-analytics",
+    specializations: globalThis.DTU_BUSANALYTICS_SPECIALIZATIONS,
+  },
+  "chemical-and-biochemical-engineering": {
+    name: "Chemical and Biochemical Engineering",
+    specStorageKey: "dtuSpec.chbe.selectedSpecId",
+    defaultSpecId: "chemical-and-biochemical-process-technology",
+    specializations: globalThis.DTU_CHBE_SPECIALIZATIONS,
+  },
 };
 
 function getProgrammeOrFallback(id) {
@@ -58,6 +82,26 @@ function warnIfMissingData() {
   if (!PROGRAMMES["architectural-engineering"].specializations) {
     console.error(
       "DTU_ARCHENG_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES.bioinformatics.specializations) {
+    console.error(
+      "DTU_BIOINF_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES.biotechnology.specializations) {
+    console.error(
+      "DTU_BIOTECH_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["business-analytics"].specializations) {
+    console.error(
+      "DTU_BUSANALYTICS_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["chemical-and-biochemical-engineering"].specializations) {
+    console.error(
+      "DTU_CHBE_SPECIALIZATIONS not found. Check manifest.js order.",
     );
   }
 }
@@ -321,16 +365,28 @@ async function renderWidget(
       const cls = inPlan ? "dtuSpec-in" : "dtuSpec-out";
       const dot = inPlan ? "in" : "out";
       const title = entry.title ? ` — ${entry.title}` : "";
+
+      const mandatoryTag = entry.mandatory
+        ? `<span class="dtuSpec-tag dtuSpec-tag--mandatory">mandatory</span>`
+        : "";
+
       const termTag = entry.terminated
         ? `<span class="dtuSpec-tag">terminated</span>`
         : "";
+
+      const altTag = entry.alternativeGroup
+        ? `<span class="dtuSpec-tag">alt: ${entry.alternativeGroup}</span>`
+        : "";
+
       return `
-        <li class="dtuSpec-course ${cls}">
-          <span class="dtuSpec-dot ${dot}"></span>
-          <b>${code}</b>${title} (${nfDa.format(entry.ects)} ECTS)
-          ${termTag}
-        </li>
-      `;
+  <li class="dtuSpec-course ${cls}">
+    <span class="dtuSpec-dot ${dot}"></span>
+    <b>${code}</b>${title} (${nfDa.format(entry.ects)} ECTS)
+    ${mandatoryTag}
+    ${termTag}
+    ${altTag}
+  </li>
+`;
     })
     .join("");
 
