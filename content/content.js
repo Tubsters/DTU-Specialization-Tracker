@@ -100,6 +100,36 @@ const PROGRAMMES = {
     defaultSpecId: "instrumentations-and-applications",
     specializations: globalThis.DTU_ENGLIGHT_SPECIALIZATIONS,
   },
+  "engineering-physics": {
+    name: "Engineering Physics",
+    specStorageKey: "dtuSpec.engphys.selectedSpecId",
+    defaultSpecId: "energy-physics",
+    specializations: globalThis.DTU_ENGPHYS_SPECIALIZATIONS,
+  },
+  "environmental-engineering": {
+    name: "Environmental Engineering",
+    specStorageKey: "dtuSpec.enveng.selectedSpecId",
+    defaultSpecId: "climate-change",
+    specializations: globalThis.DTU_ENVENG_SPECIALIZATIONS,
+  },
+  "food-technology": {
+    name: "Food Technology",
+    specStorageKey: "dtuSpec.foodtech.selectedSpecId",
+    defaultSpecId: "food-innovation",
+    specializations: globalThis.DTU_FOODTECH_SPECIALIZATIONS,
+  },
+  "human-centered-artificial-intelligence": {
+    name: "Human-Centered Artificial Intelligence",
+    specStorageKey: "dtuSpec.hcai.selectedSpecId",
+    defaultSpecId: "ai-and-cognition",
+    specializations: globalThis.DTU_HCAI_SPECIALIZATIONS,
+  },
+  "industrial-engineering-and-management": {
+    name: "Industrial Engineering and Management",
+    specStorageKey: "dtuSpec.iem.selectedSpecId",
+    defaultSpecId: "management-and-analysis-of-operations",
+    specializations: globalThis.DTU_IEM_SPECIALIZATIONS,
+  },
 };
 
 function getProgrammeOrFallback(id) {
@@ -179,6 +209,31 @@ function warnIfMissingData() {
   if (!PROGRAMMES["engineering-light"].specializations) {
     console.error(
       "DTU_ENGLIGHT_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["engineering-physics"].specializations) {
+    console.error(
+      "DTU_ENGPHYS_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["environmental-engineering"].specializations) {
+    console.error(
+      "DTU_ENVENG_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["food-technology"].specializations) {
+    console.error(
+      "DTU_FOODTECH_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["human-centered-artificial-intelligence"].specializations) {
+    console.error(
+      "DTU_HCAI_SPECIALIZATIONS not found. Check manifest.js order.",
+    );
+  }
+  if (!PROGRAMMES["industrial-engineering-and-management"].specializations) {
+    console.error(
+      "DTU_IEM_SPECIALIZATIONS not found. Check manifest.js order.",
     );
   }
 }
@@ -444,9 +499,7 @@ async function renderWidget(
       const title = entry.title ? ` — ${entry.title}` : "";
 
       const mandatoryTag = entry.mandatory
-        ? `<span class="dtuSpec-tag dtuSpec-tag--mandatory">${
-            entry.alternativeGroup ? "mandatory (one of)" : "mandatory"
-          }</span>`
+        ? `<span class="dtuSpec-tag dtuSpec-tag--mandatory">mandatory</span>`
         : "";
 
       const termTag = entry.terminated
@@ -458,14 +511,14 @@ async function renderWidget(
         : "";
 
       return `
-  <li class="dtuSpec-course ${cls}">
-    <span class="dtuSpec-dot ${dot}"></span>
-    <b>${code}</b>${title} (${nfDa.format(entry.ects)} ECTS)
-    ${mandatoryTag}
-    ${termTag}
-    ${altTag}
-  </li>
-`;
+        <li class="dtuSpec-course ${cls}">
+          <span class="dtuSpec-dot ${dot}"></span>
+          <b>${code}</b>${title} (${nfDa.format(entry.ects)} ECTS)
+          ${mandatoryTag}
+          ${termTag}
+          ${altTag}
+        </li>
+      `;
     })
     .join("");
 
