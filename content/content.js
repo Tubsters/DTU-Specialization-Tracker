@@ -12,3 +12,4 @@
 // - content/refresh.js
 
 // Keep this file as a stable entrypoint for the extension.
+// git config
