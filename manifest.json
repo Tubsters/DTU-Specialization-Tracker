@@ -6,7 +6,7 @@
   "host_permissions": ["https://studieplan.dtu.dk/*"],
   "description": "A helper tool for DTU students to track their specialization progress.",
   "icons": {
-    "16": "icons/icon16.png"
+    "icon": "icons/dtu_icon_specialization_128.png"
   },
   "content_scripts": [
     {
